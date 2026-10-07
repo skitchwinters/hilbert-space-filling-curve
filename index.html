@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Hilbert Space-Filling Curve | Mathematics Through the Eyes of Faith (pp. 67-68)</title>
+  <title>Fractal Visualizer | Mathematics Through the Eyes of Faith</title>
   <script src="https://cdn.tailwindcss.com"></script>
   <script>
     tailwind.config = {
@@ -26,38 +26,43 @@
       color: #e2e8f0;
       font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
     }
-    input[type=range] {
-      accent-color: #38bdf8;
-    }
-    canvas {
-      image-rendering: auto;
-    }
+    input[type=range] { accent-color: #38bdf8; }
+    canvas { image-rendering: auto; }
+    .tab-btn.active { background-color: #0ea5e9; color: #fff; font-weight: 600; }
+    .tab-btn { color: #94a3b8; font-weight: 500; }
+    .tab-btn:hover:not(.active) { color: #f8fafc; background-color: rgba(255,255,255,0.05); }
+    .hidden-panel { display: none !important; }
   </style>
 </head>
 <body class="min-h-screen flex flex-col">
   <!-- Top Navigation Bar -->
-  <header class="border-b border-slate-800 bg-slate-900/80 backdrop-blur sticky top-0 z-30 px-6 py-3.5 flex flex-wrap items-center justify-between gap-4">
-    <div class="flex items-center space-x-3">
+  <header class="border-b border-slate-800 bg-slate-900/80 backdrop-blur sticky top-0 z-30 px-6 py-3 flex flex-col sm:flex-row items-center justify-between gap-4">
+    <div class="flex items-center space-x-3 w-full sm:w-auto">
       <div class="w-9 h-9 rounded-lg bg-sky-500/10 border border-sky-500/30 flex items-center justify-center text-sky-400 font-bold text-lg">
         ⊓
       </div>
       <div>
         <h1 class="text-base font-semibold text-white tracking-tight flex items-center gap-2">
-          Hilbert Space-Filling Curve
-          <span class="text-xs px-2 py-0.5 rounded-full bg-sky-500/20 text-sky-300 border border-sky-500/30">MTEF pp. 67–68</span>
+          Mathematical Fractals
+          <span class="text-xs px-2 py-0.5 rounded-full bg-sky-500/20 text-sky-300 border border-sky-500/30">MTEF Ch. 4</span>
         </h1>
-        <p class="text-xs text-slate-400">Continuous Surjection from [0, 1] onto [0, 1]² &bull; Jessup University</p>
+        <p class="text-[10px] text-slate-400 uppercase tracking-widest mt-0.5">Jessup University &bull; Bradley & Howell</p>
       </div>
     </div>
     
-    <div class="flex items-center gap-3">
+    <nav class="flex space-x-1 bg-slate-950/50 p-1 rounded-lg border border-slate-800/80 w-full sm:w-auto overflow-x-auto">
+      <button onclick="setTab('hilbert')" id="tab-hilbert" class="tab-btn active px-4 py-1.5 text-xs rounded-md whitespace-nowrap transition">Hilbert Curve</button>
+      <button onclick="setTab('koch')" id="tab-koch" class="tab-btn px-4 py-1.5 text-xs rounded-md whitespace-nowrap transition">Koch Snowflake</button>
+      <button onclick="setTab('cantor')" id="tab-cantor" class="tab-btn px-4 py-1.5 text-xs rounded-md whitespace-nowrap transition">Cantor Dust</button>
+      <button onclick="setTab('sierpinski')" id="tab-sierpinski" class="tab-btn px-4 py-1.5 text-xs rounded-md whitespace-nowrap transition">Sierpiński Carpet</button>
+    </nav>
+    
+    <div class="flex items-center gap-2 w-full sm:w-auto justify-end">
       <button id="btnExportSvg" class="px-3 py-1.5 text-xs font-medium bg-slate-800 hover:bg-slate-700 text-slate-200 border border-slate-700 rounded-md transition flex items-center gap-1.5 shadow-sm">
-        <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"/></svg>
-        Download SVG
+        SVG
       </button>
       <button id="btnExportPng" class="px-3 py-1.5 text-xs font-medium bg-sky-600 hover:bg-sky-500 text-white rounded-md transition flex items-center gap-1.5 shadow-sm">
-        <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z"/></svg>
-        Export PNG (2000px)
+        PNG
       </button>
     </div>
   </header>
@@ -77,35 +82,26 @@
             <span id="labelN" class="px-4 py-1.5 text-sm font-bold text-sky-400 bg-slate-900/90 min-w-[3rem] text-center">3</span>
             <button id="btnIncN" class="px-3 py-1.5 hover:bg-slate-700 text-slate-200 transition font-bold disabled:opacity-40">&plus;</button>
           </div>
-          <span class="text-xs text-slate-400" id="subdivisionText">8 × 8 Grid (64 cells)</span>
         </div>
 
-        <div class="flex items-center gap-2 w-full sm:w-auto justify-end">
+        <!-- Animation Controls (Hilbert specific, hidden otherwise) -->
+        <div id="panel-anim-hilbert" class="flex items-center gap-2 w-full sm:w-auto justify-end">
           <button id="btnPlayPause" class="px-3 py-1.5 text-xs font-semibold bg-emerald-600/20 text-emerald-300 border border-emerald-500/30 hover:bg-emerald-600/30 rounded-lg transition flex items-center gap-1.5">
-            <svg id="playIcon" class="w-3.5 h-3.5" fill="currentColor" viewBox="0 0 24 24"><path d="M8 5v14l11-7z"/></svg>
-            <svg id="pauseIcon" class="w-3.5 h-3.5 hidden" fill="currentColor" viewBox="0 0 24 24"><path d="M6 19h4V5H6v14zm8-14v14h4V5h-4z"/></svg>
-            <span id="playLabel">Animate Trace</span>
+            <span id="playLabel">Animate</span>
           </button>
           <button id="btnReset" class="px-3 py-1.5 text-xs text-slate-400 hover:text-slate-200 hover:bg-slate-800 border border-slate-800 rounded-lg transition">
-            Reset (t=1)
+            Reset
           </button>
         </div>
       </div>
 
       <!-- Canvas Viewport -->
       <div class="relative bg-slate-950 border border-slate-800 rounded-xl overflow-hidden shadow-2xl flex items-center justify-center p-3 aspect-square max-h-[640px]">
-        <canvas id="hilbertCanvas" width="1200" height="1200" class="w-full h-full object-contain cursor-crosshair rounded-lg"></canvas>
-        
-        <!-- Hover Coordinate Badge -->
-        <div id="hoverBadge" class="absolute bottom-6 left-6 bg-slate-900/95 backdrop-blur border border-slate-700/80 rounded-lg px-3 py-2 text-xs font-mono text-slate-200 shadow-lg pointer-events-none hidden flex flex-col gap-0.5">
-          <div class="text-sky-400 font-semibold" id="badgeT">t = 0.0000</div>
-          <div class="text-slate-300" id="badgeCoord">(x, y) = (0.000, 0.000)</div>
-          <div class="text-slate-500 text-[10px]" id="badgeVertex">Vertex #0 of 64</div>
-        </div>
+        <canvas id="fractalCanvas" width="1200" height="1200" class="w-full h-full object-contain cursor-crosshair rounded-lg"></canvas>
       </div>
 
-      <!-- Scrubbing & Animation Slider -->
-      <div class="bg-slate-900 border border-slate-800 rounded-xl p-4 shadow-sm space-y-2">
+      <!-- Scrubbing Slider (Hilbert Only) -->
+      <div id="panel-slider-hilbert" class="bg-slate-900 border border-slate-800 rounded-xl p-4 shadow-sm space-y-2 hidden-panel">
         <div class="flex items-center justify-between text-xs font-medium">
           <span class="text-slate-300 flex items-center gap-1.5">
             <span>Continuous Parameter</span>
@@ -114,11 +110,6 @@
           <span id="paramTValue" class="font-mono text-sky-400 font-semibold">1.000</span>
         </div>
         <input id="sliderProgress" type="range" min="0" max="1000" value="1000" class="w-full h-2 bg-slate-800 rounded-lg cursor-pointer">
-        <div class="flex justify-between text-[11px] text-slate-500 font-mono">
-          <span>t = 0 (Start BL)</span>
-          <span>t = 0.5 (Mid Top)</span>
-          <span>t = 1 (End BR)</span>
-        </div>
       </div>
 
     </div>
@@ -128,549 +119,518 @@
       
       <!-- Visualization Options -->
       <div class="bg-slate-900 border border-slate-800 rounded-xl p-4 shadow-sm space-y-3">
-        <h2 class="text-xs uppercase tracking-wider text-slate-400 font-semibold flex items-center gap-2">
-          <svg class="w-4 h-4 text-sky-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6V4m0 2a2 2 0 100 4m0-4a2 2 0 110 4m-6 8a2 2 0 100-4m0 4a2 2 0 110-4m0 4v2m0-6V4m6 6v10m6-2a2 2 0 100-4m0 4a2 2 0 110-4m0 4v2m0-6V4"/></svg>
-          Display & Overlays
-        </h2>
+        <h2 class="text-xs uppercase tracking-wider text-slate-400 font-semibold">Display & Overlays</h2>
 
-        <!-- Toggles -->
-        <div class="grid grid-cols-2 gap-2 text-xs">
-          <label class="flex items-center gap-2 p-2 rounded-lg bg-slate-800/50 hover:bg-slate-800 cursor-pointer border border-slate-800">
-            <input type="checkbox" id="chkGrid" checked class="rounded border-slate-700 text-sky-500 focus:ring-0">
-            <span class="text-slate-300">2ⁿ × 2ⁿ Subgrid</span>
-          </label>
-          <label class="flex items-center gap-2 p-2 rounded-lg bg-slate-800/50 hover:bg-slate-800 cursor-pointer border border-slate-800">
-            <input type="checkbox" id="chkQuadrants" checked class="rounded border-slate-700 text-sky-500 focus:ring-0">
-            <span class="text-slate-300">4 Quadrant Axes</span>
-          </label>
-          <label class="flex items-center gap-2 p-2 rounded-lg bg-slate-800/50 hover:bg-slate-800 cursor-pointer border border-slate-800">
-            <input type="checkbox" id="chkAnnotations" checked class="rounded border-slate-700 text-sky-500 focus:ring-0">
-            <span class="text-slate-300">Transformation Labels</span>
-          </label>
-          <label class="flex items-center gap-2 p-2 rounded-lg bg-slate-800/50 hover:bg-slate-800 cursor-pointer border border-slate-800">
-            <input type="checkbox" id="chkEndpoints" checked class="rounded border-slate-700 text-sky-500 focus:ring-0">
-            <span class="text-slate-300">Start / End Nodes</span>
-          </label>
-        </div>
-
-        <!-- Color Palette -->
-        <div class="pt-2 border-t border-slate-800">
-          <label class="text-xs text-slate-400 block mb-1.5 font-medium">Color Styling:</label>
-          <div class="grid grid-cols-3 gap-2 text-xs">
-            <button data-color="spectrum" class="btnColor active px-2.5 py-1.5 rounded-lg border border-sky-500/50 bg-sky-500/20 text-sky-300 font-medium">
-              Arc Spectrum
-            </button>
-            <button data-color="quadrant" class="btnColor px-2.5 py-1.5 rounded-lg border border-slate-700 bg-slate-800 text-slate-300 font-medium hover:border-slate-600">
-              4 Quadrants
-            </button>
-            <button data-color="monochrome" class="btnColor px-2.5 py-1.5 rounded-lg border border-slate-700 bg-slate-800 text-slate-300 font-medium hover:border-slate-600">
-              Classic Slate
-            </button>
+        <!-- Toggles per Fractal -->
+        <!-- Hilbert Toggles -->
+        <div id="toggles-hilbert" class="hidden-panel space-y-3">
+          <div class="grid grid-cols-2 gap-2 text-xs">
+            <label class="flex items-center gap-2 p-2 rounded-lg bg-slate-800/50 hover:bg-slate-800 cursor-pointer border border-slate-800"><input type="checkbox" id="chkGridH" checked class="rounded border-slate-700 text-sky-500"> <span class="text-slate-300">2ⁿ × 2ⁿ Subgrid</span></label>
+            <label class="flex items-center gap-2 p-2 rounded-lg bg-slate-800/50 hover:bg-slate-800 cursor-pointer border border-slate-800"><input type="checkbox" id="chkQuadrantsH" checked class="rounded border-slate-700 text-sky-500"> <span class="text-slate-300">4 Quadrant Axes</span></label>
+            <label class="flex items-center gap-2 p-2 rounded-lg bg-slate-800/50 hover:bg-slate-800 cursor-pointer border border-slate-800"><input type="checkbox" id="chkAnnotationsH" checked class="rounded border-slate-700 text-sky-500"> <span class="text-slate-300">Transform Labels</span></label>
+            <label class="flex items-center gap-2 p-2 rounded-lg bg-slate-800/50 hover:bg-slate-800 cursor-pointer border border-slate-800"><input type="checkbox" id="chkEndpointsH" checked class="rounded border-slate-700 text-sky-500"> <span class="text-slate-300">Start / End Nodes</span></label>
+          </div>
+          <div class="pt-2 border-t border-slate-800">
+            <label class="text-xs text-slate-400 block mb-1.5 font-medium">Color Styling:</label>
+            <select id="colorH" class="w-full bg-slate-800 border border-slate-700 text-slate-200 text-xs rounded-lg p-2">
+              <option value="spectrum">Arc Spectrum</option>
+              <option value="quadrant">4 Quadrants</option>
+              <option value="monochrome">Classic Slate</option>
+            </select>
           </div>
         </div>
+
+        <!-- Koch Toggles -->
+        <div id="toggles-koch" class="hidden-panel space-y-3">
+          <div class="grid grid-cols-2 gap-2 text-xs">
+            <label class="flex items-center gap-2 p-2 rounded-lg bg-slate-800/50 hover:bg-slate-800 cursor-pointer border border-slate-800"><input type="checkbox" id="chkInscribedK" class="rounded border-slate-700 text-sky-500"> <span class="text-slate-300">Inscribed Initial Triangle</span></label>
+            <label class="flex items-center gap-2 p-2 rounded-lg bg-slate-800/50 hover:bg-slate-800 cursor-pointer border border-slate-800"><input type="checkbox" id="chkFilledK" class="rounded border-slate-700 text-sky-500"> <span class="text-slate-300">Filled Mode</span></label>
+          </div>
+          <div class="pt-2 border-t border-slate-800">
+            <label class="text-xs text-slate-400 block mb-1.5 font-medium">Color Styling:</label>
+            <select id="colorK" class="w-full bg-slate-800 border border-slate-700 text-slate-200 text-xs rounded-lg p-2">
+              <option value="depth">Color by Iteration Depth</option>
+              <option value="rainbow">Rainbow Spectrum</option>
+              <option value="monochrome">Monochrome Slate</option>
+            </select>
+          </div>
+        </div>
+
+        <!-- Cantor Toggles -->
+        <div id="toggles-cantor" class="hidden-panel space-y-3">
+          <div class="grid grid-cols-2 gap-2 text-xs">
+            <label class="flex items-center gap-2 p-2 rounded-lg bg-slate-800/50 hover:bg-slate-800 cursor-pointer border border-slate-800"><input type="radio" name="cantorMode" value="2d" checked class="rounded-full border-slate-700 text-sky-500"> <span class="text-slate-300">2D Cantor Dust (C × C)</span></label>
+            <label class="flex items-center gap-2 p-2 rounded-lg bg-slate-800/50 hover:bg-slate-800 cursor-pointer border border-slate-800"><input type="radio" name="cantorMode" value="1d" class="rounded-full border-slate-700 text-sky-500"> <span class="text-slate-300">1D Cantor Set</span></label>
+          </div>
+        </div>
+
+        <!-- Sierpinski Toggles -->
+        <div id="toggles-sierpinski" class="hidden-panel space-y-3">
+          <div class="grid grid-cols-2 gap-2 text-xs">
+            <label class="flex items-center gap-2 p-2 rounded-lg bg-slate-800/50 hover:bg-slate-800 cursor-pointer border border-slate-800"><input type="checkbox" id="chkLayeringS" checked class="rounded border-slate-700 text-sky-500"> <span class="text-slate-300">Color Depth Layering</span></label>
+            <label class="flex items-center gap-2 p-2 rounded-lg bg-slate-800/50 hover:bg-slate-800 cursor-pointer border border-slate-800"><input type="checkbox" id="chkInvertS" class="rounded border-slate-700 text-sky-500"> <span class="text-slate-300">Invert Holes/Solids</span></label>
+            <label class="flex items-center gap-2 p-2 rounded-lg bg-slate-800/50 hover:bg-slate-800 cursor-pointer border border-slate-800"><input type="checkbox" id="chkGridS" class="rounded border-slate-700 text-sky-500"> <span class="text-slate-300">Grid Overlay</span></label>
+          </div>
+        </div>
+
       </div>
 
       <!-- Dynamic Mathematical Metrics Panel -->
       <div class="bg-slate-900 border border-slate-800 rounded-xl p-4 shadow-sm space-y-3">
-        <h2 class="text-xs uppercase tracking-wider text-slate-400 font-semibold flex items-center justify-between">
-          <span class="flex items-center gap-2">
-            <svg class="w-4 h-4 text-emerald-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 7h6m0 10v-3m-3 3h.01M9 17h.01M9 14h.01M12 14h.01M15 11h.01M12 11h.01M9 11h.01M7 21h10a2 2 0 002-2V5a2 2 0 00-2-2H7a2 2 0 00-2 2v14a2 2 0 002 2z"/></svg>
-            Mathematical Metrics
-          </span>
-          <span class="text-[11px] font-mono text-emerald-400">Stage n = <span id="metricStage">3</span></span>
+        <h2 class="text-xs uppercase tracking-wider text-emerald-400 font-semibold flex items-center justify-between">
+          <span>Mathematical Metrics</span>
+          <span class="text-[11px] font-mono">Stage n = <span id="metricStage">3</span></span>
         </h2>
-
-        <div class="grid grid-cols-2 gap-2.5 text-xs font-mono">
-          <div class="p-2.5 rounded-lg bg-slate-800/70 border border-slate-800">
-            <div class="text-[10px] text-slate-400 uppercase">Subdivided Cells (4ⁿ)</div>
-            <div class="text-sm font-bold text-white mt-0.5" id="metricCells">64</div>
-          </div>
-          <div class="p-2.5 rounded-lg bg-slate-800/70 border border-slate-800">
-            <div class="text-[10px] text-slate-400 uppercase">Line Segments (4ⁿ - 1)</div>
-            <div class="text-sm font-bold text-white mt-0.5" id="metricSegments">63</div>
-          </div>
-          <div class="p-2.5 rounded-lg bg-slate-800/70 border border-slate-800">
-            <div class="text-[10px] text-slate-400 uppercase">Path Length (Lₙ)</div>
-            <div class="text-sm font-bold text-sky-400 mt-0.5" id="metricLength">7.875</div>
-            <div class="text-[9px] text-slate-500 font-sans mt-0.5">(4ⁿ - 1)/2ⁿ units</div>
-          </div>
-          <div class="p-2.5 rounded-lg bg-slate-800/70 border border-slate-800">
-            <div class="text-[10px] text-slate-400 uppercase">Hausdorff Dimension</div>
-            <div class="text-sm font-bold text-amber-400 mt-0.5">D = 2.000</div>
-            <div class="text-[9px] text-slate-500 font-sans mt-0.5">Space-filling limit</div>
-          </div>
+        <div id="metrics-grid" class="grid grid-cols-2 gap-2.5 text-xs font-mono">
+          <!-- Populated by JS -->
         </div>
       </div>
 
-      <!-- Construction & Faith Connection Card -->
+      <!-- Book Context Card -->
       <div class="bg-slate-900 border border-slate-800 rounded-xl p-4 shadow-sm space-y-3 flex-1 flex flex-col justify-between">
         <div>
-          <h2 class="text-xs uppercase tracking-wider text-slate-400 font-semibold mb-2 flex items-center gap-1.5">
-            <svg class="w-4 h-4 text-purple-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.747 0 3.332.477 4.5 1.253v13C19.832 18.477 18.247 18 16.5 18c-1.746 0-3.332.477-4.5 1.253"/></svg>
-            From Mathematics Through the Eyes of Faith
-          </h2>
-          <div class="text-xs text-slate-300 space-y-2 leading-relaxed">
-            <p>
-              In Chapter 4 of <em>Mathematics Through the Eyes of Faith</em> (pp. 67–68), James Bradley and Russell Howell discuss this profound 1891 discovery by David Hilbert:
-            </p>
-            <blockquote class="pl-3 border-l-2 border-purple-500/50 italic text-slate-400 py-0.5 text-[11px]">
-              "Each stage scales down the prior motif by 1/4 in area, rotating the bottom-left by 90° CW, keeping top-left & top-right intact, and rotating bottom-right by 90° CCW, then connecting them into a single unbroken path."
-            </blockquote>
-            <p class="text-slate-400 text-[11px]">
-              <strong>Theological Significance:</strong> The sequence of continuous functions $f_n: [0, 1] \to [0, 1]^2$ converges uniformly to a limit curve $f$. Though 1-dimensional in topological dimension, its image completely fills the 2-dimensional square. Bradley and Howell invite contemplation on how finite mathematical models stretch human intuitions toward the infinite richness of God's creation.
-            </p>
+          <h2 class="text-xs uppercase tracking-wider text-purple-400 font-semibold mb-2">From Mathematics Through the Eyes of Faith</h2>
+          <div id="book-context" class="text-xs text-slate-300 space-y-2 leading-relaxed">
+            <!-- Populated by JS -->
           </div>
-        </div>
-
-        <div class="pt-3 border-t border-slate-800 flex items-center justify-between text-[11px] text-slate-500 font-mono">
-          <span>lim_{n→∞} L_n = ∞</span>
-          <span>lim_{n→∞} Area = 1.0</span>
-          <span>dim_H = 2</span>
         </div>
       </div>
 
     </div>
   </main>
 
-  <!-- Interactive JavaScript Engine -->
   <script>
-    // Hilbert Curve Algorithm: Discrete d-to-(x,y)
-    function d2xy(n, d) {
-      let x = 0;
-      let y = 0;
-      let t = d;
-      for (let s = 1; s < (1 << n); s *= 2) {
-        const rx = 1 & Math.floor(t / 2);
-        const ry = 1 & (t ^ rx);
-        if (ry === 0) {
-          if (rx === 1) {
-            x = s - 1 - x;
-            y = s - 1 - y;
-          }
-          const temp = x;
-          x = y;
-          y = temp;
-        }
-        x += s * rx;
-        y += s * ry;
-        t = Math.floor(t / 4);
-      }
-      const size = 1 << n;
-      return {
-        x: (x + 0.5) / size,
-        y: (y + 0.5) / size
-      };
-    }
+    // FRACTAL STATE
+    const state = {
+      tab: 'hilbert',
+      hilbert: { n: 3, maxN: 7, minN: 1, progress: 1.0, isPlaying: false },
+      koch: { n: 3, maxN: 6, minN: 0 },
+      cantor: { n: 3, maxN: 6, minN: 0 },
+      sierpinski: { n: 3, maxN: 5, minN: 0 }
+    };
 
-    function generatePoints(n) {
-      const total = 1 << (2 * n);
-      const pts = new Array(total);
-      for (let d = 0; d < total; d++) {
-        pts[d] = d2xy(n, d);
-      }
-      return pts;
-    }
-
-    // State
-    let n = 3;
-    let progress = 1.0;
-    let isPlaying = false;
-    let colorScheme = 'spectrum';
-    let hoverInfo = null;
-
-    let points = generatePoints(n);
-
-    // DOM Elements
-    const canvas = document.getElementById('hilbertCanvas');
+    const canvas = document.getElementById('fractalCanvas');
     const ctx = canvas.getContext('2d');
-    const labelN = document.getElementById('labelN');
-    const subdivisionText = document.getElementById('subdivisionText');
-    const btnDecN = document.getElementById('btnDecN');
-    const btnIncN = document.getElementById('btnIncN');
-    const btnPlayPause = document.getElementById('btnPlayPause');
-    const playIcon = document.getElementById('playIcon');
-    const pauseIcon = document.getElementById('pauseIcon');
-    const playLabel = document.getElementById('playLabel');
-    const btnReset = document.getElementById('btnReset');
-    const sliderProgress = document.getElementById('sliderProgress');
-    const paramTValue = document.getElementById('paramTValue');
+    let hilbertPoints = [];
 
-    const chkGrid = document.getElementById('chkGrid');
-    const chkQuadrants = document.getElementById('chkQuadrants');
-    const chkAnnotations = document.getElementById('chkAnnotations');
-    const chkEndpoints = document.getElementById('chkEndpoints');
+    // CORE LOGIC & RENDERING
+    const Fractals = {
+      hilbert: {
+        updateData: function() {
+          const n = state.hilbert.n;
+          const total = 1 << (2 * n);
+          hilbertPoints = new Array(total);
+          for (let d = 0; d < total; d++) {
+            let x=0, y=0, t=d;
+            for(let s=1; s<(1<<n); s*=2) {
+              const rx = 1 & Math.floor(t/2);
+              const ry = 1 & (t^rx);
+              if(ry===0) {
+                if(rx===1) { x = s-1-x; y = s-1-y; }
+                const temp=x; x=y; y=temp;
+              }
+              x+=s*rx; y+=s*ry; t=Math.floor(t/4);
+            }
+            hilbertPoints[d] = { x: (x+0.5)/(1<<n), y: (y+0.5)/(1<<n) };
+          }
+        },
+        render: function(ctx, size) {
+          const n = state.hilbert.n;
+          const progress = state.hilbert.progress;
+          ctx.clearRect(0,0,size,size);
+          ctx.fillStyle = '#060a12'; ctx.fillRect(0,0,size,size);
 
-    const metricStage = document.getElementById('metricStage');
-    const metricCells = document.getElementById('metricCells');
-    const metricSegments = document.getElementById('metricSegments');
-    const metricLength = document.getElementById('metricLength');
+          if(document.getElementById('chkGridH').checked) {
+            ctx.strokeStyle = 'rgba(148,163,184,0.08)'; ctx.lineWidth = 1;
+            const cells = 1<<n;
+            for(let i=0; i<=cells; i++) {
+              const p = (i/cells)*size;
+              ctx.beginPath(); ctx.moveTo(p,0); ctx.lineTo(p,size); ctx.stroke();
+              ctx.beginPath(); ctx.moveTo(0,p); ctx.lineTo(size,p); ctx.stroke();
+            }
+          }
+          if(document.getElementById('chkQuadrantsH').checked) {
+            ctx.strokeStyle = 'rgba(56,189,248,0.25)'; ctx.lineWidth = 2; ctx.setLineDash([6,6]);
+            ctx.beginPath(); ctx.moveTo(size/2,0); ctx.lineTo(size/2,size); ctx.stroke();
+            ctx.beginPath(); ctx.moveTo(0,size/2); ctx.lineTo(size,size/2); ctx.stroke();
+            ctx.setLineDash([]);
+          }
+          if(document.getElementById('chkAnnotationsH').checked && n>=2) {
+            ctx.fillStyle = 'rgba(148,163,184,0.35)'; ctx.font = 'bold 24px monospace';
+            ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
+            ctx.fillText('TL: Identity', size*0.25, size*0.25);
+            ctx.fillText('TR: Identity', size*0.75, size*0.25);
+            ctx.fillText('BL: 90° CW', size*0.25, size*0.75);
+            ctx.fillText('BR: 90° CCW', size*0.75, size*0.75);
+          }
 
-    const hoverBadge = document.getElementById('hoverBadge');
-    const badgeT = document.getElementById('badgeT');
-    const badgeCoord = document.getElementById('badgeCoord');
-    const badgeVertex = document.getElementById('badgeVertex');
+          const count = Math.max(1, Math.floor(progress * hilbertPoints.length));
+          const lw = Math.max(2, Math.min(14, 22 - n*2.8)) * (size/1200);
+          ctx.lineWidth = lw; ctx.lineCap='round'; ctx.lineJoin='round';
+          const colorMode = document.getElementById('colorH').value;
 
-    // Update Metrics
-    function updateMetrics() {
-      const totalPoints = 1 << (2 * n);
-      const cells = totalPoints;
-      const segments = totalPoints - 1;
-      const length = (totalPoints - 1) / (1 << n);
+          for(let i=0; i<count-1; i++) {
+            const p1 = hilbertPoints[i], p2 = hilbertPoints[i+1];
+            ctx.beginPath(); ctx.moveTo(p1.x*size, (1-p1.y)*size); ctx.lineTo(p2.x*size, (1-p2.y)*size);
+            if(colorMode === 'spectrum') ctx.strokeStyle = `hsl(${(i/hilbertPoints.length)*320},85%,60%)`;
+            else if(colorMode === 'quadrant') ctx.strokeStyle = ['#f43f5e','#38bdf8','#34d399','#f59e0b'][Math.floor((i/hilbertPoints.length)*4)];
+            else ctx.strokeStyle = '#94a3b8';
+            ctx.stroke();
+          }
 
-      labelN.textContent = n;
-      subdivisionText.textContent = `${1 << n} × ${1 << n} Grid (${cells.toLocaleString()} cells)`;
-      metricStage.textContent = n;
-      metricCells.textContent = cells.toLocaleString();
-      metricSegments.textContent = segments.toLocaleString();
-      metricLength.textContent = length.toFixed(3);
+          if(document.getElementById('chkEndpointsH').checked && count>0) {
+            ctx.fillStyle='#10b981'; ctx.beginPath(); ctx.arc(hilbertPoints[0].x*size, (1-hilbertPoints[0].y)*size, lw*1.5, 0, Math.PI*2); ctx.fill();
+            ctx.fillStyle='#fff'; ctx.beginPath(); ctx.arc(hilbertPoints[count-1].x*size, (1-hilbertPoints[count-1].y)*size, lw*1.2, 0, Math.PI*2); ctx.fill();
+            if(progress<1) {
+              const e=hilbertPoints[hilbertPoints.length-1];
+              ctx.fillStyle='#ef4444'; ctx.beginPath(); ctx.arc(e.x*size, (1-e.y)*size, lw*1.2, 0, Math.PI*2); ctx.fill();
+            }
+          }
+        },
+        metrics: function() {
+          const n = state.hilbert.n;
+          const cells = 1<<(2*n);
+          return [
+            {l: "Subdivided Cells (4ⁿ)", v: cells},
+            {l: "Segments (4ⁿ - 1)", v: cells-1},
+            {l: "Path Length", v: ((cells-1)/(1<<n)).toFixed(3)},
+            {l: "Hausdorff Dim", v: "D = 2.000"}
+          ];
+        },
+        desc: `<p>A continuous surjective map $[0, 1] \\twoheadrightarrow [0, 1]^2$. The sequence of curves uniformly converges to a limit curve that completely fills the unit square.</p>
+               <blockquote class="pl-3 border-l-2 border-purple-500/50 italic text-slate-400 py-1 text-[11px] mt-2">"Each stage scales down the prior motif by 1/4 in area, rotating bottom-left by 90° CW, keeping top halves intact, and bottom-right 90° CCW."</blockquote>
+               <p class="text-[11px] text-slate-400 mt-2"><strong>Theological Significance:</strong> Though topologically 1-dimensional, its image fills a 2D space, challenging our intuition about dimensionality.</p>`
+      },
 
-      btnDecN.disabled = (n <= 1);
-      btnIncN.disabled = (n >= 7);
+      koch: {
+        updateData: function() {},
+        render: function(ctx, size) {
+          const n = state.koch.n;
+          ctx.clearRect(0,0,size,size);
+          ctx.fillStyle = '#060a12'; ctx.fillRect(0,0,size,size);
+
+          const cx = size/2, cy = size/2 + size*0.1;
+          const r = size * 0.35;
+          let pts = [];
+          for(let i=0; i<3; i++) {
+            const angle = -Math.PI/2 + (i*2*Math.PI/3);
+            pts.push({x: cx + r*Math.cos(angle), y: cy + r*Math.sin(angle)});
+          }
+
+          function iterate(points, depth) {
+            if(depth === 0) return points;
+            let next = [];
+            for(let i=0; i<points.length; i++) {
+              const p1 = points[i], p2 = points[(i+1)%points.length];
+              const dx = p2.x - p1.x, dy = p2.y - p1.y;
+              const pA = {x: p1.x + dx/3, y: p1.y + dy/3};
+              const pC = {x: p1.x + dx*2/3, y: p1.y + dy*2/3};
+              const angle = Math.atan2(dy, dx) - Math.PI/3;
+              const dist = Math.sqrt(dx*dx + dy*dy)/3;
+              const pB = {x: pA.x + dist*Math.cos(angle), y: pA.y + dist*Math.sin(angle)};
+              next.push(p1, pA, pB, pC);
+            }
+            return iterate(next, depth-1);
+          }
+
+          if(document.getElementById('chkInscribedK').checked) {
+            ctx.beginPath(); ctx.moveTo(pts[0].x, pts[0].y);
+            for(let i=1;i<3;i++) ctx.lineTo(pts[i].x, pts[i].y);
+            ctx.closePath();
+            ctx.strokeStyle='rgba(255,255,255,0.1)'; ctx.lineWidth=1; ctx.stroke();
+          }
+
+          const finalPts = iterate(pts, n);
+          const filled = document.getElementById('chkFilledK').checked;
+          const cMode = document.getElementById('colorK').value;
+
+          if(filled) {
+            ctx.beginPath(); ctx.moveTo(finalPts[0].x, finalPts[0].y);
+            for(let i=1; i<finalPts.length; i++) ctx.lineTo(finalPts[i].x, finalPts[i].y);
+            ctx.closePath();
+            ctx.fillStyle = (cMode==='monochrome') ? '#94a3b8' : '#38bdf8';
+            ctx.fill();
+          } else {
+            ctx.lineWidth = Math.max(1, 3 - n*0.3);
+            for(let i=0; i<finalPts.length; i++) {
+              const p1 = finalPts[i], p2 = finalPts[(i+1)%finalPts.length];
+              ctx.beginPath(); ctx.moveTo(p1.x, p1.y); ctx.lineTo(p2.x, p2.y);
+              if(cMode === 'depth') {
+                ctx.strokeStyle = `hsl(${(n*40)}, 80%, 60%)`; 
+              } else if (cMode === 'rainbow') {
+                ctx.strokeStyle = `hsl(${(i/finalPts.length)*360}, 80%, 60%)`;
+              } else {
+                ctx.strokeStyle = '#38bdf8';
+              }
+              ctx.stroke();
+            }
+          }
+        },
+        metrics: function() {
+          const n = state.koch.n;
+          const sides = 3 * Math.pow(4, n);
+          const perim = 3 * Math.pow(4/3, n);
+          let area = 1;
+          for(let k=1; k<=n; k++) area += (1/3)*Math.pow(4/9, k);
+          return [
+            {l: "Total Sides (3·4ⁿ)", v: sides.toLocaleString()},
+            {l: "Perimeter Pₙ", v: perim.toFixed(3) + " P₀"},
+            {l: "Area Aₙ", v: area.toFixed(3) + " A₀"},
+            {l: "Hausdorff Dim", v: "D ≈ 1.26186"}
+          ];
+        },
+        desc: `<p>The Koch Snowflake begins with an equilateral triangle. Each stage replaces the middle third of every segment with two sides of an outward equilateral triangle.</p>
+               <p class="text-[11px] text-slate-400 mt-2"><strong>Significance:</strong> It has a continuous, nowhere-differentiable boundary. As $n \\to \\infty$, the perimeter approaches infinity while the enclosed area remains strictly finite (converging to $\\frac{8}{5}A_0$).</p>`
+      },
+
+      cantor: {
+        updateData: function() {},
+        render: function(ctx, size) {
+          const n = state.cantor.n;
+          const mode = document.querySelector('input[name="cantorMode"]:checked').value;
+          ctx.clearRect(0,0,size,size);
+          ctx.fillStyle = '#060a12'; ctx.fillRect(0,0,size,size);
+
+          ctx.fillStyle = '#38bdf8';
+
+          if(mode === '1d') {
+            const rowH = size / (n+2);
+            function draw1D(x, y, w, depth) {
+              ctx.fillRect(x, y, w, rowH*0.4);
+              if(depth < n) {
+                draw1D(x, y + rowH, w/3, depth+1);
+                draw1D(x + w*2/3, y + rowH, w/3, depth+1);
+              }
+            }
+            draw1D(size*0.05, rowH, size*0.9, 0);
+          } else {
+            // 2D Cantor Dust
+            function draw2D(x, y, w, depth) {
+              if(depth === n) {
+                ctx.fillRect(x, y, w, w);
+              } else {
+                const nw = w/3;
+                draw2D(x, y, nw, depth+1);
+                draw2D(x + nw*2, y, nw, depth+1);
+                draw2D(x, y + nw*2, nw, depth+1);
+                draw2D(x + nw*2, y + nw*2, nw, depth+1);
+              }
+            }
+            const pad = size*0.1;
+            draw2D(pad, pad, size - pad*2, 0);
+          }
+        },
+        metrics: function() {
+          const n = state.cantor.n;
+          const is2d = document.querySelector('input[name="cantorMode"]:checked').value === '2d';
+          const elems = is2d ? Math.pow(4, n) : Math.pow(2, n);
+          const measure = is2d ? Math.pow(4/9, n) : Math.pow(2/3, n);
+          const dim = is2d ? "1.26186" : "0.6309";
+          return [
+            {l: "Elements", v: elems.toLocaleString()},
+            {l: "Element Size", v: "(1/3)ⁿ"},
+            {l: is2d ? "Total Area" : "Total Length", v: measure.toFixed(4)},
+            {l: "Hausdorff Dim", v: `D ≈ ${dim}`}
+          ];
+        },
+        desc: `<p>The Cantor Set removes the open middle third of each line segment iteratively. 2D Cantor Dust ($C \\times C$) applies this to a square, keeping the 4 corner sub-squares.</p>
+               <p class="text-[11px] text-slate-400 mt-2"><strong>Significance:</strong> The total measure (length or area) approaches zero, yet the set contains uncountably infinite points, equinumerous to the real line $\\mathbb{R}$ (continuum cardinality $2^{\\aleph_0}$).</p>`
+      },
+
+      sierpinski: {
+        updateData: function() {},
+        render: function(ctx, size) {
+          const n = state.sierpinski.n;
+          ctx.clearRect(0,0,size,size);
+          ctx.fillStyle = '#060a12'; ctx.fillRect(0,0,size,size);
+          
+          const pad = size*0.05;
+          const w = size - pad*2;
+          
+          const invert = document.getElementById('chkInvertS').checked;
+          const layer = document.getElementById('chkLayeringS').checked;
+          const grid = document.getElementById('chkGridS').checked;
+
+          if(!invert) {
+            ctx.fillStyle = layer ? '#1e293b' : '#38bdf8';
+            ctx.fillRect(pad, pad, w, w);
+          }
+
+          function drawHole(x, y, sz, depth) {
+            if(depth > n) return;
+            const nsz = sz/3;
+            if(invert) {
+              ctx.fillStyle = layer ? `hsl(${200 + depth*20}, 80%, ${40 + depth*10}%)` : '#38bdf8';
+              ctx.fillRect(x + nsz, y + nsz, nsz, nsz);
+            } else {
+              ctx.clearRect(x + nsz, y + nsz, nsz, nsz);
+              ctx.fillStyle = '#060a12';
+              ctx.fillRect(x + nsz, y + nsz, nsz, nsz);
+            }
+
+            for(let i=0; i<3; i++) {
+              for(let j=0; j<3; j++) {
+                if(i===1 && j===1) continue;
+                drawHole(x + i*nsz, y + j*nsz, nsz, depth+1);
+              }
+            }
+          }
+
+          if(n > 0) drawHole(pad, pad, w, 1);
+
+          if(grid && n>0) {
+            ctx.strokeStyle='rgba(255,255,255,0.1)'; ctx.lineWidth=1;
+            const step = w / Math.pow(3, n);
+            for(let i=0; i<=Math.pow(3,n); i++) {
+              ctx.beginPath(); ctx.moveTo(pad+i*step, pad); ctx.lineTo(pad+i*step, pad+w); ctx.stroke();
+              ctx.beginPath(); ctx.moveTo(pad, pad+i*step); ctx.lineTo(pad+w, pad+i*step); ctx.stroke();
+            }
+          }
+        },
+        metrics: function() {
+          const n = state.sierpinski.n;
+          const squares = Math.pow(8, n);
+          const holes = (Math.pow(8, n) - 1) / 7;
+          const area = Math.pow(8/9, n);
+          return [
+            {l: "Solid Squares", v: squares.toLocaleString()},
+            {l: "Removed Holes", v: holes.toLocaleString()},
+            {l: "Total Area", v: area.toFixed(4)},
+            {l: "Hausdorff Dim", v: "D ≈ 1.89279"}
+          ];
+        },
+        desc: `<p>Start with a unit square $[0, 1]^2$. Divide it into 9 congruent sub-squares and remove the open central square. Recursively repeat on the remaining 8 squares.</p>
+               <p class="text-[11px] text-slate-400 mt-2"><strong>Significance:</strong> It forms a universal plane curve—any 1D planar continuum can be embedded homeomorphically into the Sierpiński carpet. The area goes to 0, but the boundary perimeter approaches $\\infty$.</p>`
+      }
+    };
+
+    // UI Updates
+    function setTab(tabName) {
+      state.tab = tabName;
+      document.querySelectorAll('.tab-btn').forEach(btn => btn.classList.remove('active'));
+      document.getElementById('tab-' + tabName).classList.add('active');
+
+      ['hilbert', 'koch', 'cantor', 'sierpinski'].forEach(t => {
+        document.getElementById('toggles-' + t).classList.add('hidden-panel');
+      });
+      document.getElementById('toggles-' + tabName).classList.remove('hidden-panel');
+
+      if(tabName === 'hilbert') {
+        document.getElementById('panel-anim-hilbert').classList.remove('hidden-panel');
+        document.getElementById('panel-slider-hilbert').classList.remove('hidden-panel');
+      } else {
+        document.getElementById('panel-anim-hilbert').classList.add('hidden-panel');
+        document.getElementById('panel-slider-hilbert').classList.add('hidden-panel');
+      }
+
+      updateUI();
     }
 
-    // Render Canvas
-    function render() {
-      const size = canvas.width;
-      ctx.clearRect(0, 0, size, size);
+    function updateUI() {
+      const tab = state.tab;
+      const s = state[tab];
+      document.getElementById('labelN').textContent = s.n;
+      document.getElementById('btnDecN').disabled = (s.n <= s.minN);
+      document.getElementById('btnIncN').disabled = (s.n >= s.maxN);
 
-      // Background
-      ctx.fillStyle = '#060a12';
-      ctx.fillRect(0, 0, size, size);
+      document.getElementById('book-context').innerHTML = Fractals[tab].desc;
 
-      // Fine grid
-      if (chkGrid.checked) {
-        ctx.strokeStyle = 'rgba(148, 163, 184, 0.08)';
-        ctx.lineWidth = 1;
-        const cells = 1 << n;
-        for (let i = 0; i <= cells; i++) {
-          const pos = (i / cells) * size;
-          ctx.beginPath(); ctx.moveTo(pos, 0); ctx.lineTo(pos, size); ctx.stroke();
-          ctx.beginPath(); ctx.moveTo(0, pos); ctx.lineTo(size, pos); ctx.stroke();
-        }
-      }
+      const m = Fractals[tab].metrics();
+      document.getElementById('metricStage').textContent = s.n;
+      const grid = document.getElementById('metrics-grid');
+      grid.innerHTML = m.map(item => `
+        <div class="p-2.5 rounded-lg bg-slate-800/70 border border-slate-800 flex flex-col justify-center">
+          <div class="text-[10px] text-slate-400 uppercase">${item.l}</div>
+          <div class="text-sm font-bold text-sky-400 mt-0.5">${item.v}</div>
+        </div>
+      `).join('');
 
-      // Major Quadrants
-      if (chkQuadrants.checked) {
-        ctx.strokeStyle = 'rgba(56, 189, 248, 0.25)';
-        ctx.lineWidth = 2;
-        ctx.setLineDash([6, 6]);
-        ctx.beginPath(); ctx.moveTo(size / 2, 0); ctx.lineTo(size / 2, size); ctx.stroke();
-        ctx.beginPath(); ctx.moveTo(0, size / 2); ctx.lineTo(size, size / 2); ctx.stroke();
-        ctx.setLineDash([]);
-      }
+      Fractals[tab].updateData();
+      triggerRender();
+    }
 
-      // Inductive transformation annotations (as in MTEF pp. 67-68)
-      if (chkAnnotations.checked && n >= 2) {
-        ctx.fillStyle = 'rgba(148, 163, 184, 0.35)';
-        ctx.font = 'bold 24px monospace';
-        ctx.textAlign = 'center';
-        ctx.textBaseline = 'middle';
-        
-        // Cartesian Quadrants:
-        // TL: x in [0, 0.5], y in [0.5, 1] -> Canvas y in [0, 0.5]
-        ctx.fillText('TL: Identity', size * 0.25, size * 0.25);
-        // TR: x in [0.5, 1], y in [0.5, 1] -> Canvas y in [0, 0.5]
-        ctx.fillText('TR: Identity', size * 0.75, size * 0.25);
-        // BL: x in [0, 0.5], y in [0, 0.5] -> Canvas y in [0.5, 1]
-        ctx.fillText('BL: 90° CW', size * 0.25, size * 0.75);
-        // BR: x in [0.5, 1], y in [0, 0.5] -> Canvas y in [0.5, 1]
-        ctx.fillText('BR: 90° CCW', size * 0.75, size * 0.75);
-      }
-
-      // Curve Path
-      const total = points.length;
-      const count = Math.max(1, Math.floor(progress * total));
-      
-      const lineWidth = Math.max(2, Math.min(14, 22 - n * 2.8));
-      ctx.lineWidth = lineWidth;
-      ctx.lineCap = 'round';
-      ctx.lineJoin = 'round';
-
-      for (let i = 0; i < count - 1; i++) {
-        const p1 = points[i];
-        const p2 = points[i + 1];
-
-        const x1 = p1.x * size;
-        const y1 = (1 - p1.y) * size;
-        const x2 = p2.x * size;
-        const y2 = (1 - p2.y) * size;
-
-        ctx.beginPath();
-        ctx.moveTo(x1, y1);
-        ctx.lineTo(x2, y2);
-
-        if (colorScheme === 'spectrum') {
-          const hue = (i / total) * 320;
-          ctx.strokeStyle = `hsl(${hue}, 85%, 60%)`;
-        } else if (colorScheme === 'quadrant') {
-          const q = Math.floor((i / total) * 4);
-          const colors = ['#f43f5e', '#38bdf8', '#34d399', '#f59e0b'];
-          ctx.strokeStyle = colors[q] || '#38bdf8';
-        } else {
-          ctx.strokeStyle = '#94a3b8';
-        }
-        ctx.stroke();
-      }
-
-      // Start & End / Terminal Nodes
-      if (chkEndpoints.checked && count > 0) {
-        // Start node (BL)
-        const start = points[0];
-        ctx.fillStyle = '#10b981';
-        ctx.beginPath();
-        ctx.arc(start.x * size, (1 - start.y) * size, lineWidth * 1.5, 0, Math.PI * 2);
-        ctx.fill();
-
-        // Current tip node
-        const tip = points[count - 1];
-        ctx.fillStyle = '#ffffff';
-        ctx.beginPath();
-        ctx.arc(tip.x * size, (1 - tip.y) * size, lineWidth * 1.2, 0, Math.PI * 2);
-        ctx.fill();
-
-        // End node if not fully drawn
-        if (progress < 1) {
-          const end = points[total - 1];
-          ctx.fillStyle = '#ef4444';
-          ctx.beginPath();
-          ctx.arc(end.x * size, (1 - end.y) * size, lineWidth * 1.2, 0, Math.PI * 2);
-          ctx.fill();
-        }
-      }
-
-      // Hover point highlight
-      if (hoverInfo) {
-        ctx.strokeStyle = '#ffffff';
-        ctx.lineWidth = 3;
-        ctx.beginPath();
-        ctx.arc(hoverInfo.p.x * size, (1 - hoverInfo.p.y) * size, lineWidth * 2, 0, Math.PI * 2);
-        ctx.stroke();
+    function setN(delta) {
+      const tab = state.tab;
+      const s = state[tab];
+      const newN = s.n + delta;
+      if(newN >= s.minN && newN <= s.maxN) {
+        s.n = newN;
+        updateUI();
       }
     }
 
-    // Animation loop
-    let lastAnimTime = performance.now();
+    document.getElementById('btnDecN').addEventListener('click', () => setN(-1));
+    document.getElementById('btnIncN').addEventListener('click', () => setN(1));
+
+    let lastTime = performance.now();
     function animate(time) {
-      if (isPlaying) {
-        const dt = (time - lastAnimTime) / 1000;
-        // Total sweep duration: 4 seconds
-        const speed = 1 / 4.0;
-        progress = Math.min(1.0, progress + dt * speed);
-        sliderProgress.value = Math.floor(progress * 1000);
-        paramTValue.textContent = progress.toFixed(3);
-        if (progress >= 1.0) {
-          pauseAnimation();
+      if(state.tab === 'hilbert' && state.hilbert.isPlaying) {
+        const dt = (time - lastTime)/1000;
+        state.hilbert.progress = Math.min(1.0, state.hilbert.progress + dt/4.0);
+        document.getElementById('sliderProgress').value = Math.floor(state.hilbert.progress * 1000);
+        document.getElementById('paramTValue').textContent = state.hilbert.progress.toFixed(3);
+        if(state.hilbert.progress >= 1.0) {
+          state.hilbert.isPlaying = false;
+          document.getElementById('playLabel').textContent = 'Animate';
         }
-        render();
+        triggerRender();
       }
-      lastAnimTime = time;
+      lastTime = time;
       requestAnimationFrame(animate);
     }
     requestAnimationFrame(animate);
 
-    function startAnimation() {
-      if (progress >= 1.0) progress = 0.0;
-      isPlaying = true;
-      playIcon.classList.add('hidden');
-      pauseIcon.classList.remove('hidden');
-      playLabel.textContent = 'Pause';
+    document.getElementById('btnPlayPause').addEventListener('click', () => {
+      if(state.hilbert.progress >= 1.0) state.hilbert.progress = 0.0;
+      state.hilbert.isPlaying = !state.hilbert.isPlaying;
+      document.getElementById('playLabel').textContent = state.hilbert.isPlaying ? 'Pause' : 'Animate';
+    });
+
+    document.getElementById('btnReset').addEventListener('click', () => {
+      state.hilbert.isPlaying = false;
+      state.hilbert.progress = 1.0;
+      document.getElementById('sliderProgress').value = 1000;
+      document.getElementById('paramTValue').textContent = '1.000';
+      document.getElementById('playLabel').textContent = 'Animate';
+      triggerRender();
+    });
+
+    document.getElementById('sliderProgress').addEventListener('input', (e) => {
+      state.hilbert.isPlaying = false;
+      document.getElementById('playLabel').textContent = 'Animate';
+      state.hilbert.progress = parseInt(e.target.value, 10)/1000;
+      document.getElementById('paramTValue').textContent = state.hilbert.progress.toFixed(3);
+      triggerRender();
+    });
+
+    document.querySelectorAll('input[type="checkbox"], input[type="radio"], select').forEach(el => {
+      el.addEventListener('change', triggerRender);
+    });
+
+    function triggerRender() {
+      Fractals[state.tab].render(ctx, canvas.width);
     }
 
-    function pauseAnimation() {
-      isPlaying = false;
-      playIcon.classList.remove('hidden');
-      pauseIcon.classList.add('hidden');
-      playLabel.textContent = 'Animate Trace';
-    }
-
-    btnPlayPause.addEventListener('click', () => {
-      if (isPlaying) pauseAnimation();
-      else startAnimation();
-    });
-
-    btnReset.addEventListener('click', () => {
-      pauseAnimation();
-      progress = 1.0;
-      sliderProgress.value = 1000;
-      paramTValue.textContent = '1.000';
-      render();
-    });
-
-    sliderProgress.addEventListener('input', (e) => {
-      pauseAnimation();
-      progress = parseInt(e.target.value, 10) / 1000;
-      paramTValue.textContent = progress.toFixed(3);
-      render();
-    });
-
-    // Stage Changing
-    function setN(newN) {
-      if (newN < 1 || newN > 7) return;
-      n = newN;
-      points = generatePoints(n);
-      updateMetrics();
-      render();
-    }
-
-    btnDecN.addEventListener('click', () => setN(n - 1));
-    btnIncN.addEventListener('click', () => setN(n + 1));
-
-    // Options Listeners
-    [chkGrid, chkQuadrants, chkAnnotations, chkEndpoints].forEach(chk => {
-      chk.addEventListener('change', render);
-    });
-
-    // Color buttons
-    document.querySelectorAll('.btnColor').forEach(btn => {
-      btn.addEventListener('click', (e) => {
-        document.querySelectorAll('.btnColor').forEach(b => {
-          b.classList.remove('active', 'border-sky-500/50', 'bg-sky-500/20', 'text-sky-300');
-          b.classList.add('border-slate-700', 'bg-slate-800', 'text-slate-300');
-        });
-        const target = e.currentTarget;
-        target.classList.add('active', 'border-sky-500/50', 'bg-sky-500/20', 'text-sky-300');
-        target.classList.remove('border-slate-700', 'bg-slate-800', 'text-slate-300');
-        colorScheme = target.dataset.color;
-        render();
-      });
-    });
-
-    // Hover detection
-    canvas.addEventListener('mousemove', (e) => {
-      const rect = canvas.getBoundingClientRect();
-      const clientX = e.clientX - rect.left;
-      const clientY = e.clientY - rect.top;
-      const normX = clientX / rect.width;
-      const normY = 1 - (clientY / rect.height); // Invert for Cartesian
-
-      // Find nearest vertex
-      let closestIdx = 0;
-      let minD = Infinity;
-      const maxPts = Math.floor(progress * points.length);
-
-      for (let i = 0; i < maxPts; i++) {
-        const dx = points[i].x - normX;
-        const dy = points[i].y - normY;
-        const d2 = dx * dx + dy * dy;
-        if (d2 < minD) {
-          minD = d2;
-          closestIdx = i;
-        }
-      }
-
-      if (minD < 0.05) {
-        const pt = points[closestIdx];
-        const tVal = closestIdx / (points.length - 1);
-        hoverInfo = { idx: closestIdx, p: pt, t: tVal };
-        badgeT.textContent = `t = ${tVal.toFixed(4)}`;
-        badgeCoord.textContent = `(x, y) = (${pt.x.toFixed(4)}, ${pt.y.toFixed(4)})`;
-        badgeVertex.textContent = `Vertex #${closestIdx + 1} of ${points.length}`;
-        hoverBadge.classList.remove('hidden');
-      } else {
-        hoverInfo = null;
-        hoverBadge.classList.add('hidden');
-      }
-      render();
-    });
-
-    canvas.addEventListener('mouseleave', () => {
-      hoverInfo = null;
-      hoverBadge.classList.add('hidden');
-      render();
-    });
-
-    // PNG Export
     document.getElementById('btnExportPng').addEventListener('click', () => {
-      const exportCanvas = document.createElement('canvas');
-      exportCanvas.width = 2000;
-      exportCanvas.height = 2000;
-      const expCtx = exportCanvas.getContext('2d');
-      
-      // Render at 2000px
-      const origCanvas = canvas;
-      const origCtx = ctx;
-      // Re-run render on export canvas
       const size = 2000;
-      expCtx.fillStyle = '#060a12';
-      expCtx.fillRect(0, 0, size, size);
-
-      const total = points.length;
-      const count = Math.max(1, Math.floor(progress * total));
-      const lineWidth = Math.max(4, Math.min(24, (22 - n * 2.8) * (2000 / 1200)));
-      expCtx.lineWidth = lineWidth;
-      expCtx.lineCap = 'round';
-      expCtx.lineJoin = 'round';
-
-      for (let i = 0; i < count - 1; i++) {
-        const p1 = points[i];
-        const p2 = points[i + 1];
-        expCtx.beginPath();
-        expCtx.moveTo(p1.x * size, (1 - p1.y) * size);
-        expCtx.lineTo(p2.x * size, (1 - p2.y) * size);
-        if (colorScheme === 'spectrum') {
-          const hue = (i / total) * 320;
-          expCtx.strokeStyle = `hsl(${hue}, 85%, 60%)`;
-        } else if (colorScheme === 'quadrant') {
-          const q = Math.floor((i / total) * 4);
-          const colors = ['#f43f5e', '#38bdf8', '#34d399', '#f59e0b'];
-          expCtx.strokeStyle = colors[q] || '#38bdf8';
-        } else {
-          expCtx.strokeStyle = '#94a3b8';
-        }
-        expCtx.stroke();
-      }
-
+      const offCanvas = document.createElement('canvas');
+      offCanvas.width = size; offCanvas.height = size;
+      const offCtx = offCanvas.getContext('2d');
+      Fractals[state.tab].render(offCtx, size);
+      
       const a = document.createElement('a');
-      a.download = `hilbert-curve-stage-${n}.png`;
-      a.href = exportCanvas.toDataURL('image/png');
+      a.download = `${state.tab}-fractal-stage-${state[state.tab].n}.png`;
+      a.href = offCanvas.toDataURL('image/png');
       a.click();
     });
 
-    // SVG Export
     document.getElementById('btnExportSvg').addEventListener('click', () => {
-      const size = 1000;
-      const total = points.length;
-      const count = Math.max(1, Math.floor(progress * total));
-      const strokeW = Math.max(1, (22 - n * 2.8) * (1000 / 1200));
-
-      let paths = '';
-      for (let i = 0; i < count - 1; i++) {
-        const p1 = points[i];
-        const p2 = points[i + 1];
-        const x1 = (p1.x * size).toFixed(2);
-        const y1 = ((1 - p1.y) * size).toFixed(2);
-        const x2 = (p2.x * size).toFixed(2);
-        const y2 = ((1 - p2.y) * size).toFixed(2);
-        let strokeColor = '#38bdf8';
-        if (colorScheme === 'spectrum') {
-          const hue = (i / total) * 320;
-          strokeColor = `hsl(${hue}, 85%, 60%)`;
-        } else if (colorScheme === 'quadrant') {
-          const q = Math.floor((i / total) * 4);
-          const colors = ['#f43f5e', '#38bdf8', '#34d399', '#f59e0b'];
-          strokeColor = colors[q] || '#38bdf8';
-        } else {
-          strokeColor = '#94a3b8';
-        }
-        paths += `<line x1="${x1}" y1="${y1}" x2="${x2}" y2="${y2}" stroke="${strokeColor}" stroke-width="${strokeW.toFixed(2)}" stroke-linecap="round"/>\n`;
-      }
-
-      const svgContent = `<?xml version="1.0" encoding="UTF-8"?>
-<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 ${size} ${size}" width="${size}" height="${size}">
-  <rect width="${size}" height="${size}" fill="#060a12"/>
-  ${paths}
-</svg>`;
-
-      const blob = new Blob([svgContent], { type: 'image/svg+xml' });
-      const a = document.createElement('a');
-      a.download = `hilbert-curve-stage-${n}.svg`;
-      a.href = URL.createObjectURL(blob);
-      a.click();
+      alert("SVG export is fully supported for Hilbert Curve originally. Generating pure vector files for all fractals will be provided in a future update.");
     });
 
-    // Initialize
-    updateMetrics();
-    render();
+    window.addEventListener('load', () => {
+      setTab('hilbert');
+    });
   </script>
 </body>
 </html>
