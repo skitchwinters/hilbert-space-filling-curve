@@ -1,0 +1,676 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Hilbert Space-Filling Curve | Mathematics Through the Eyes of Faith (pp. 67-68)</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script>
+    tailwind.config = {
+      darkMode: 'class',
+      theme: {
+        extend: {
+          colors: {
+            slate: {
+              850: '#151e2e',
+              950: '#070c14'
+            }
+          }
+        }
+      }
+    }
+  </script>
+  <style>
+    body {
+      background-color: #090d16;
+      color: #e2e8f0;
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+    }
+    input[type=range] {
+      accent-color: #38bdf8;
+    }
+    canvas {
+      image-rendering: auto;
+    }
+  </style>
+</head>
+<body class="min-h-screen flex flex-col">
+  <!-- Top Navigation Bar -->
+  <header class="border-b border-slate-800 bg-slate-900/80 backdrop-blur sticky top-0 z-30 px-6 py-3.5 flex flex-wrap items-center justify-between gap-4">
+    <div class="flex items-center space-x-3">
+      <div class="w-9 h-9 rounded-lg bg-sky-500/10 border border-sky-500/30 flex items-center justify-center text-sky-400 font-bold text-lg">
+        ⊓
+      </div>
+      <div>
+        <h1 class="text-base font-semibold text-white tracking-tight flex items-center gap-2">
+          Hilbert Space-Filling Curve
+          <span class="text-xs px-2 py-0.5 rounded-full bg-sky-500/20 text-sky-300 border border-sky-500/30">MTEF pp. 67–68</span>
+        </h1>
+        <p class="text-xs text-slate-400">Continuous Surjection from [0, 1] onto [0, 1]² &bull; Jessup University</p>
+      </div>
+    </div>
+    
+    <div class="flex items-center gap-3">
+      <button id="btnExportSvg" class="px-3 py-1.5 text-xs font-medium bg-slate-800 hover:bg-slate-700 text-slate-200 border border-slate-700 rounded-md transition flex items-center gap-1.5 shadow-sm">
+        <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"/></svg>
+        Download SVG
+      </button>
+      <button id="btnExportPng" class="px-3 py-1.5 text-xs font-medium bg-sky-600 hover:bg-sky-500 text-white rounded-md transition flex items-center gap-1.5 shadow-sm">
+        <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z"/></svg>
+        Export PNG (2000px)
+      </button>
+    </div>
+  </header>
+
+  <!-- Main Content Layout -->
+  <main class="flex-1 max-w-7xl w-full mx-auto p-4 md:p-6 grid grid-cols-1 lg:grid-cols-12 gap-6">
+    
+    <!-- Left Column: Controls & Canvas (7 cols) -->
+    <div class="lg:col-span-7 flex flex-col space-y-4">
+      
+      <!-- Stage & Iteration Controls Bar -->
+      <div class="bg-slate-900 border border-slate-800 rounded-xl p-4 shadow-sm flex flex-col sm:flex-row items-center justify-between gap-4">
+        <div class="flex items-center space-x-3 w-full sm:w-auto">
+          <span class="text-xs uppercase tracking-wider text-slate-400 font-semibold">Stage (n):</span>
+          <div class="flex items-center border border-slate-700 rounded-lg overflow-hidden bg-slate-800/60">
+            <button id="btnDecN" class="px-3 py-1.5 hover:bg-slate-700 text-slate-200 transition font-bold disabled:opacity-40">&minus;</button>
+            <span id="labelN" class="px-4 py-1.5 text-sm font-bold text-sky-400 bg-slate-900/90 min-w-[3rem] text-center">3</span>
+            <button id="btnIncN" class="px-3 py-1.5 hover:bg-slate-700 text-slate-200 transition font-bold disabled:opacity-40">&plus;</button>
+          </div>
+          <span class="text-xs text-slate-400" id="subdivisionText">8 × 8 Grid (64 cells)</span>
+        </div>
+
+        <div class="flex items-center gap-2 w-full sm:w-auto justify-end">
+          <button id="btnPlayPause" class="px-3 py-1.5 text-xs font-semibold bg-emerald-600/20 text-emerald-300 border border-emerald-500/30 hover:bg-emerald-600/30 rounded-lg transition flex items-center gap-1.5">
+            <svg id="playIcon" class="w-3.5 h-3.5" fill="currentColor" viewBox="0 0 24 24"><path d="M8 5v14l11-7z"/></svg>
+            <svg id="pauseIcon" class="w-3.5 h-3.5 hidden" fill="currentColor" viewBox="0 0 24 24"><path d="M6 19h4V5H6v14zm8-14v14h4V5h-4z"/></svg>
+            <span id="playLabel">Animate Trace</span>
+          </button>
+          <button id="btnReset" class="px-3 py-1.5 text-xs text-slate-400 hover:text-slate-200 hover:bg-slate-800 border border-slate-800 rounded-lg transition">
+            Reset (t=1)
+          </button>
+        </div>
+      </div>
+
+      <!-- Canvas Viewport -->
+      <div class="relative bg-slate-950 border border-slate-800 rounded-xl overflow-hidden shadow-2xl flex items-center justify-center p-3 aspect-square max-h-[640px]">
+        <canvas id="hilbertCanvas" width="1200" height="1200" class="w-full h-full object-contain cursor-crosshair rounded-lg"></canvas>
+        
+        <!-- Hover Coordinate Badge -->
+        <div id="hoverBadge" class="absolute bottom-6 left-6 bg-slate-900/95 backdrop-blur border border-slate-700/80 rounded-lg px-3 py-2 text-xs font-mono text-slate-200 shadow-lg pointer-events-none hidden flex flex-col gap-0.5">
+          <div class="text-sky-400 font-semibold" id="badgeT">t = 0.0000</div>
+          <div class="text-slate-300" id="badgeCoord">(x, y) = (0.000, 0.000)</div>
+          <div class="text-slate-500 text-[10px]" id="badgeVertex">Vertex #0 of 64</div>
+        </div>
+      </div>
+
+      <!-- Scrubbing & Animation Slider -->
+      <div class="bg-slate-900 border border-slate-800 rounded-xl p-4 shadow-sm space-y-2">
+        <div class="flex items-center justify-between text-xs font-medium">
+          <span class="text-slate-300 flex items-center gap-1.5">
+            <span>Continuous Parameter</span>
+            <span class="font-mono text-sky-400 text-xs">t &isin; [0, 1]</span>
+          </span>
+          <span id="paramTValue" class="font-mono text-sky-400 font-semibold">1.000</span>
+        </div>
+        <input id="sliderProgress" type="range" min="0" max="1000" value="1000" class="w-full h-2 bg-slate-800 rounded-lg cursor-pointer">
+        <div class="flex justify-between text-[11px] text-slate-500 font-mono">
+          <span>t = 0 (Start BL)</span>
+          <span>t = 0.5 (Mid Top)</span>
+          <span>t = 1 (End BR)</span>
+        </div>
+      </div>
+
+    </div>
+
+    <!-- Right Column: Settings, Mathematical Metrics & Book Context (5 cols) -->
+    <div class="lg:col-span-5 flex flex-col space-y-4">
+      
+      <!-- Visualization Options -->
+      <div class="bg-slate-900 border border-slate-800 rounded-xl p-4 shadow-sm space-y-3">
+        <h2 class="text-xs uppercase tracking-wider text-slate-400 font-semibold flex items-center gap-2">
+          <svg class="w-4 h-4 text-sky-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6V4m0 2a2 2 0 100 4m0-4a2 2 0 110 4m-6 8a2 2 0 100-4m0 4a2 2 0 110-4m0 4v2m0-6V4m6 6v10m6-2a2 2 0 100-4m0 4a2 2 0 110-4m0 4v2m0-6V4"/></svg>
+          Display & Overlays
+        </h2>
+
+        <!-- Toggles -->
+        <div class="grid grid-cols-2 gap-2 text-xs">
+          <label class="flex items-center gap-2 p-2 rounded-lg bg-slate-800/50 hover:bg-slate-800 cursor-pointer border border-slate-800">
+            <input type="checkbox" id="chkGrid" checked class="rounded border-slate-700 text-sky-500 focus:ring-0">
+            <span class="text-slate-300">2ⁿ × 2ⁿ Subgrid</span>
+          </label>
+          <label class="flex items-center gap-2 p-2 rounded-lg bg-slate-800/50 hover:bg-slate-800 cursor-pointer border border-slate-800">
+            <input type="checkbox" id="chkQuadrants" checked class="rounded border-slate-700 text-sky-500 focus:ring-0">
+            <span class="text-slate-300">4 Quadrant Axes</span>
+          </label>
+          <label class="flex items-center gap-2 p-2 rounded-lg bg-slate-800/50 hover:bg-slate-800 cursor-pointer border border-slate-800">
+            <input type="checkbox" id="chkAnnotations" checked class="rounded border-slate-700 text-sky-500 focus:ring-0">
+            <span class="text-slate-300">Transformation Labels</span>
+          </label>
+          <label class="flex items-center gap-2 p-2 rounded-lg bg-slate-800/50 hover:bg-slate-800 cursor-pointer border border-slate-800">
+            <input type="checkbox" id="chkEndpoints" checked class="rounded border-slate-700 text-sky-500 focus:ring-0">
+            <span class="text-slate-300">Start / End Nodes</span>
+          </label>
+        </div>
+
+        <!-- Color Palette -->
+        <div class="pt-2 border-t border-slate-800">
+          <label class="text-xs text-slate-400 block mb-1.5 font-medium">Color Styling:</label>
+          <div class="grid grid-cols-3 gap-2 text-xs">
+            <button data-color="spectrum" class="btnColor active px-2.5 py-1.5 rounded-lg border border-sky-500/50 bg-sky-500/20 text-sky-300 font-medium">
+              Arc Spectrum
+            </button>
+            <button data-color="quadrant" class="btnColor px-2.5 py-1.5 rounded-lg border border-slate-700 bg-slate-800 text-slate-300 font-medium hover:border-slate-600">
+              4 Quadrants
+            </button>
+            <button data-color="monochrome" class="btnColor px-2.5 py-1.5 rounded-lg border border-slate-700 bg-slate-800 text-slate-300 font-medium hover:border-slate-600">
+              Classic Slate
+            </button>
+          </div>
+        </div>
+      </div>
+
+      <!-- Dynamic Mathematical Metrics Panel -->
+      <div class="bg-slate-900 border border-slate-800 rounded-xl p-4 shadow-sm space-y-3">
+        <h2 class="text-xs uppercase tracking-wider text-slate-400 font-semibold flex items-center justify-between">
+          <span class="flex items-center gap-2">
+            <svg class="w-4 h-4 text-emerald-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 7h6m0 10v-3m-3 3h.01M9 17h.01M9 14h.01M12 14h.01M15 11h.01M12 11h.01M9 11h.01M7 21h10a2 2 0 002-2V5a2 2 0 00-2-2H7a2 2 0 00-2 2v14a2 2 0 002 2z"/></svg>
+            Mathematical Metrics
+          </span>
+          <span class="text-[11px] font-mono text-emerald-400">Stage n = <span id="metricStage">3</span></span>
+        </h2>
+
+        <div class="grid grid-cols-2 gap-2.5 text-xs font-mono">
+          <div class="p-2.5 rounded-lg bg-slate-800/70 border border-slate-800">
+            <div class="text-[10px] text-slate-400 uppercase">Subdivided Cells (4ⁿ)</div>
+            <div class="text-sm font-bold text-white mt-0.5" id="metricCells">64</div>
+          </div>
+          <div class="p-2.5 rounded-lg bg-slate-800/70 border border-slate-800">
+            <div class="text-[10px] text-slate-400 uppercase">Line Segments (4ⁿ - 1)</div>
+            <div class="text-sm font-bold text-white mt-0.5" id="metricSegments">63</div>
+          </div>
+          <div class="p-2.5 rounded-lg bg-slate-800/70 border border-slate-800">
+            <div class="text-[10px] text-slate-400 uppercase">Path Length (Lₙ)</div>
+            <div class="text-sm font-bold text-sky-400 mt-0.5" id="metricLength">7.875</div>
+            <div class="text-[9px] text-slate-500 font-sans mt-0.5">(4ⁿ - 1)/2ⁿ units</div>
+          </div>
+          <div class="p-2.5 rounded-lg bg-slate-800/70 border border-slate-800">
+            <div class="text-[10px] text-slate-400 uppercase">Hausdorff Dimension</div>
+            <div class="text-sm font-bold text-amber-400 mt-0.5">D = 2.000</div>
+            <div class="text-[9px] text-slate-500 font-sans mt-0.5">Space-filling limit</div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Construction & Faith Connection Card -->
+      <div class="bg-slate-900 border border-slate-800 rounded-xl p-4 shadow-sm space-y-3 flex-1 flex flex-col justify-between">
+        <div>
+          <h2 class="text-xs uppercase tracking-wider text-slate-400 font-semibold mb-2 flex items-center gap-1.5">
+            <svg class="w-4 h-4 text-purple-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.747 0 3.332.477 4.5 1.253v13C19.832 18.477 18.247 18 16.5 18c-1.746 0-3.332.477-4.5 1.253"/></svg>
+            From Mathematics Through the Eyes of Faith
+          </h2>
+          <div class="text-xs text-slate-300 space-y-2 leading-relaxed">
+            <p>
+              In Chapter 4 of <em>Mathematics Through the Eyes of Faith</em> (pp. 67–68), James Bradley and Russell Howell discuss this profound 1891 discovery by David Hilbert:
+            </p>
+            <blockquote class="pl-3 border-l-2 border-purple-500/50 italic text-slate-400 py-0.5 text-[11px]">
+              "Each stage scales down the prior motif by 1/4 in area, rotating the bottom-left by 90° CW, keeping top-left & top-right intact, and rotating bottom-right by 90° CCW, then connecting them into a single unbroken path."
+            </blockquote>
+            <p class="text-slate-400 text-[11px]">
+              <strong>Theological Significance:</strong> The sequence of continuous functions $f_n: [0, 1] \to [0, 1]^2$ converges uniformly to a limit curve $f$. Though 1-dimensional in topological dimension, its image completely fills the 2-dimensional square. Bradley and Howell invite contemplation on how finite mathematical models stretch human intuitions toward the infinite richness of God's creation.
+            </p>
+          </div>
+        </div>
+
+        <div class="pt-3 border-t border-slate-800 flex items-center justify-between text-[11px] text-slate-500 font-mono">
+          <span>lim_{n→∞} L_n = ∞</span>
+          <span>lim_{n→∞} Area = 1.0</span>
+          <span>dim_H = 2</span>
+        </div>
+      </div>
+
+    </div>
+  </main>
+
+  <!-- Interactive JavaScript Engine -->
+  <script>
+    // Hilbert Curve Algorithm: Discrete d-to-(x,y)
+    function d2xy(n, d) {
+      let x = 0;
+      let y = 0;
+      let t = d;
+      for (let s = 1; s < (1 << n); s *= 2) {
+        const rx = 1 & Math.floor(t / 2);
+        const ry = 1 & (t ^ rx);
+        if (ry === 0) {
+          if (rx === 1) {
+            x = s - 1 - x;
+            y = s - 1 - y;
+          }
+          const temp = x;
+          x = y;
+          y = temp;
+        }
+        x += s * rx;
+        y += s * ry;
+        t = Math.floor(t / 4);
+      }
+      const size = 1 << n;
+      return {
+        x: (x + 0.5) / size,
+        y: (y + 0.5) / size
+      };
+    }
+
+    function generatePoints(n) {
+      const total = 1 << (2 * n);
+      const pts = new Array(total);
+      for (let d = 0; d < total; d++) {
+        pts[d] = d2xy(n, d);
+      }
+      return pts;
+    }
+
+    // State
+    let n = 3;
+    let progress = 1.0;
+    let isPlaying = false;
+    let colorScheme = 'spectrum';
+    let hoverInfo = null;
+
+    let points = generatePoints(n);
+
+    // DOM Elements
+    const canvas = document.getElementById('hilbertCanvas');
+    const ctx = canvas.getContext('2d');
+    const labelN = document.getElementById('labelN');
+    const subdivisionText = document.getElementById('subdivisionText');
+    const btnDecN = document.getElementById('btnDecN');
+    const btnIncN = document.getElementById('btnIncN');
+    const btnPlayPause = document.getElementById('btnPlayPause');
+    const playIcon = document.getElementById('playIcon');
+    const pauseIcon = document.getElementById('pauseIcon');
+    const playLabel = document.getElementById('playLabel');
+    const btnReset = document.getElementById('btnReset');
+    const sliderProgress = document.getElementById('sliderProgress');
+    const paramTValue = document.getElementById('paramTValue');
+
+    const chkGrid = document.getElementById('chkGrid');
+    const chkQuadrants = document.getElementById('chkQuadrants');
+    const chkAnnotations = document.getElementById('chkAnnotations');
+    const chkEndpoints = document.getElementById('chkEndpoints');
+
+    const metricStage = document.getElementById('metricStage');
+    const metricCells = document.getElementById('metricCells');
+    const metricSegments = document.getElementById('metricSegments');
+    const metricLength = document.getElementById('metricLength');
+
+    const hoverBadge = document.getElementById('hoverBadge');
+    const badgeT = document.getElementById('badgeT');
+    const badgeCoord = document.getElementById('badgeCoord');
+    const badgeVertex = document.getElementById('badgeVertex');
+
+    // Update Metrics
+    function updateMetrics() {
+      const totalPoints = 1 << (2 * n);
+      const cells = totalPoints;
+      const segments = totalPoints - 1;
+      const length = (totalPoints - 1) / (1 << n);
+
+      labelN.textContent = n;
+      subdivisionText.textContent = `${1 << n} × ${1 << n} Grid (${cells.toLocaleString()} cells)`;
+      metricStage.textContent = n;
+      metricCells.textContent = cells.toLocaleString();
+      metricSegments.textContent = segments.toLocaleString();
+      metricLength.textContent = length.toFixed(3);
+
+      btnDecN.disabled = (n <= 1);
+      btnIncN.disabled = (n >= 7);
+    }
+
+    // Render Canvas
+    function render() {
+      const size = canvas.width;
+      ctx.clearRect(0, 0, size, size);
+
+      // Background
+      ctx.fillStyle = '#060a12';
+      ctx.fillRect(0, 0, size, size);
+
+      // Fine grid
+      if (chkGrid.checked) {
+        ctx.strokeStyle = 'rgba(148, 163, 184, 0.08)';
+        ctx.lineWidth = 1;
+        const cells = 1 << n;
+        for (let i = 0; i <= cells; i++) {
+          const pos = (i / cells) * size;
+          ctx.beginPath(); ctx.moveTo(pos, 0); ctx.lineTo(pos, size); ctx.stroke();
+          ctx.beginPath(); ctx.moveTo(0, pos); ctx.lineTo(size, pos); ctx.stroke();
+        }
+      }
+
+      // Major Quadrants
+      if (chkQuadrants.checked) {
+        ctx.strokeStyle = 'rgba(56, 189, 248, 0.25)';
+        ctx.lineWidth = 2;
+        ctx.setLineDash([6, 6]);
+        ctx.beginPath(); ctx.moveTo(size / 2, 0); ctx.lineTo(size / 2, size); ctx.stroke();
+        ctx.beginPath(); ctx.moveTo(0, size / 2); ctx.lineTo(size, size / 2); ctx.stroke();
+        ctx.setLineDash([]);
+      }
+
+      // Inductive transformation annotations (as in MTEF pp. 67-68)
+      if (chkAnnotations.checked && n >= 2) {
+        ctx.fillStyle = 'rgba(148, 163, 184, 0.35)';
+        ctx.font = 'bold 24px monospace';
+        ctx.textAlign = 'center';
+        ctx.textBaseline = 'middle';
+        
+        // Cartesian Quadrants:
+        // TL: x in [0, 0.5], y in [0.5, 1] -> Canvas y in [0, 0.5]
+        ctx.fillText('TL: Identity', size * 0.25, size * 0.25);
+        // TR: x in [0.5, 1], y in [0.5, 1] -> Canvas y in [0, 0.5]
+        ctx.fillText('TR: Identity', size * 0.75, size * 0.25);
+        // BL: x in [0, 0.5], y in [0, 0.5] -> Canvas y in [0.5, 1]
+        ctx.fillText('BL: 90° CW', size * 0.25, size * 0.75);
+        // BR: x in [0.5, 1], y in [0, 0.5] -> Canvas y in [0.5, 1]
+        ctx.fillText('BR: 90° CCW', size * 0.75, size * 0.75);
+      }
+
+      // Curve Path
+      const total = points.length;
+      const count = Math.max(1, Math.floor(progress * total));
+      
+      const lineWidth = Math.max(2, Math.min(14, 22 - n * 2.8));
+      ctx.lineWidth = lineWidth;
+      ctx.lineCap = 'round';
+      ctx.lineJoin = 'round';
+
+      for (let i = 0; i < count - 1; i++) {
+        const p1 = points[i];
+        const p2 = points[i + 1];
+
+        const x1 = p1.x * size;
+        const y1 = (1 - p1.y) * size;
+        const x2 = p2.x * size;
+        const y2 = (1 - p2.y) * size;
+
+        ctx.beginPath();
+        ctx.moveTo(x1, y1);
+        ctx.lineTo(x2, y2);
+
+        if (colorScheme === 'spectrum') {
+          const hue = (i / total) * 320;
+          ctx.strokeStyle = `hsl(${hue}, 85%, 60%)`;
+        } else if (colorScheme === 'quadrant') {
+          const q = Math.floor((i / total) * 4);
+          const colors = ['#f43f5e', '#38bdf8', '#34d399', '#f59e0b'];
+          ctx.strokeStyle = colors[q] || '#38bdf8';
+        } else {
+          ctx.strokeStyle = '#94a3b8';
+        }
+        ctx.stroke();
+      }
+
+      // Start & End / Terminal Nodes
+      if (chkEndpoints.checked && count > 0) {
+        // Start node (BL)
+        const start = points[0];
+        ctx.fillStyle = '#10b981';
+        ctx.beginPath();
+        ctx.arc(start.x * size, (1 - start.y) * size, lineWidth * 1.5, 0, Math.PI * 2);
+        ctx.fill();
+
+        // Current tip node
+        const tip = points[count - 1];
+        ctx.fillStyle = '#ffffff';
+        ctx.beginPath();
+        ctx.arc(tip.x * size, (1 - tip.y) * size, lineWidth * 1.2, 0, Math.PI * 2);
+        ctx.fill();
+
+        // End node if not fully drawn
+        if (progress < 1) {
+          const end = points[total - 1];
+          ctx.fillStyle = '#ef4444';
+          ctx.beginPath();
+          ctx.arc(end.x * size, (1 - end.y) * size, lineWidth * 1.2, 0, Math.PI * 2);
+          ctx.fill();
+        }
+      }
+
+      // Hover point highlight
+      if (hoverInfo) {
+        ctx.strokeStyle = '#ffffff';
+        ctx.lineWidth = 3;
+        ctx.beginPath();
+        ctx.arc(hoverInfo.p.x * size, (1 - hoverInfo.p.y) * size, lineWidth * 2, 0, Math.PI * 2);
+        ctx.stroke();
+      }
+    }
+
+    // Animation loop
+    let lastAnimTime = performance.now();
+    function animate(time) {
+      if (isPlaying) {
+        const dt = (time - lastAnimTime) / 1000;
+        // Total sweep duration: 4 seconds
+        const speed = 1 / 4.0;
+        progress = Math.min(1.0, progress + dt * speed);
+        sliderProgress.value = Math.floor(progress * 1000);
+        paramTValue.textContent = progress.toFixed(3);
+        if (progress >= 1.0) {
+          pauseAnimation();
+        }
+        render();
+      }
+      lastAnimTime = time;
+      requestAnimationFrame(animate);
+    }
+    requestAnimationFrame(animate);
+
+    function startAnimation() {
+      if (progress >= 1.0) progress = 0.0;
+      isPlaying = true;
+      playIcon.classList.add('hidden');
+      pauseIcon.classList.remove('hidden');
+      playLabel.textContent = 'Pause';
+    }
+
+    function pauseAnimation() {
+      isPlaying = false;
+      playIcon.classList.remove('hidden');
+      pauseIcon.classList.add('hidden');
+      playLabel.textContent = 'Animate Trace';
+    }
+
+    btnPlayPause.addEventListener('click', () => {
+      if (isPlaying) pauseAnimation();
+      else startAnimation();
+    });
+
+    btnReset.addEventListener('click', () => {
+      pauseAnimation();
+      progress = 1.0;
+      sliderProgress.value = 1000;
+      paramTValue.textContent = '1.000';
+      render();
+    });
+
+    sliderProgress.addEventListener('input', (e) => {
+      pauseAnimation();
+      progress = parseInt(e.target.value, 10) / 1000;
+      paramTValue.textContent = progress.toFixed(3);
+      render();
+    });
+
+    // Stage Changing
+    function setN(newN) {
+      if (newN < 1 || newN > 7) return;
+      n = newN;
+      points = generatePoints(n);
+      updateMetrics();
+      render();
+    }
+
+    btnDecN.addEventListener('click', () => setN(n - 1));
+    btnIncN.addEventListener('click', () => setN(n + 1));
+
+    // Options Listeners
+    [chkGrid, chkQuadrants, chkAnnotations, chkEndpoints].forEach(chk => {
+      chk.addEventListener('change', render);
+    });
+
+    // Color buttons
+    document.querySelectorAll('.btnColor').forEach(btn => {
+      btn.addEventListener('click', (e) => {
+        document.querySelectorAll('.btnColor').forEach(b => {
+          b.classList.remove('active', 'border-sky-500/50', 'bg-sky-500/20', 'text-sky-300');
+          b.classList.add('border-slate-700', 'bg-slate-800', 'text-slate-300');
+        });
+        const target = e.currentTarget;
+        target.classList.add('active', 'border-sky-500/50', 'bg-sky-500/20', 'text-sky-300');
+        target.classList.remove('border-slate-700', 'bg-slate-800', 'text-slate-300');
+        colorScheme = target.dataset.color;
+        render();
+      });
+    });
+
+    // Hover detection
+    canvas.addEventListener('mousemove', (e) => {
+      const rect = canvas.getBoundingClientRect();
+      const clientX = e.clientX - rect.left;
+      const clientY = e.clientY - rect.top;
+      const normX = clientX / rect.width;
+      const normY = 1 - (clientY / rect.height); // Invert for Cartesian
+
+      // Find nearest vertex
+      let closestIdx = 0;
+      let minD = Infinity;
+      const maxPts = Math.floor(progress * points.length);
+
+      for (let i = 0; i < maxPts; i++) {
+        const dx = points[i].x - normX;
+        const dy = points[i].y - normY;
+        const d2 = dx * dx + dy * dy;
+        if (d2 < minD) {
+          minD = d2;
+          closestIdx = i;
+        }
+      }
+
+      if (minD < 0.05) {
+        const pt = points[closestIdx];
+        const tVal = closestIdx / (points.length - 1);
+        hoverInfo = { idx: closestIdx, p: pt, t: tVal };
+        badgeT.textContent = `t = ${tVal.toFixed(4)}`;
+        badgeCoord.textContent = `(x, y) = (${pt.x.toFixed(4)}, ${pt.y.toFixed(4)})`;
+        badgeVertex.textContent = `Vertex #${closestIdx + 1} of ${points.length}`;
+        hoverBadge.classList.remove('hidden');
+      } else {
+        hoverInfo = null;
+        hoverBadge.classList.add('hidden');
+      }
+      render();
+    });
+
+    canvas.addEventListener('mouseleave', () => {
+      hoverInfo = null;
+      hoverBadge.classList.add('hidden');
+      render();
+    });
+
+    // PNG Export
+    document.getElementById('btnExportPng').addEventListener('click', () => {
+      const exportCanvas = document.createElement('canvas');
+      exportCanvas.width = 2000;
+      exportCanvas.height = 2000;
+      const expCtx = exportCanvas.getContext('2d');
+      
+      // Render at 2000px
+      const origCanvas = canvas;
+      const origCtx = ctx;
+      // Re-run render on export canvas
+      const size = 2000;
+      expCtx.fillStyle = '#060a12';
+      expCtx.fillRect(0, 0, size, size);
+
+      const total = points.length;
+      const count = Math.max(1, Math.floor(progress * total));
+      const lineWidth = Math.max(4, Math.min(24, (22 - n * 2.8) * (2000 / 1200)));
+      expCtx.lineWidth = lineWidth;
+      expCtx.lineCap = 'round';
+      expCtx.lineJoin = 'round';
+
+      for (let i = 0; i < count - 1; i++) {
+        const p1 = points[i];
+        const p2 = points[i + 1];
+        expCtx.beginPath();
+        expCtx.moveTo(p1.x * size, (1 - p1.y) * size);
+        expCtx.lineTo(p2.x * size, (1 - p2.y) * size);
+        if (colorScheme === 'spectrum') {
+          const hue = (i / total) * 320;
+          expCtx.strokeStyle = `hsl(${hue}, 85%, 60%)`;
+        } else if (colorScheme === 'quadrant') {
+          const q = Math.floor((i / total) * 4);
+          const colors = ['#f43f5e', '#38bdf8', '#34d399', '#f59e0b'];
+          expCtx.strokeStyle = colors[q] || '#38bdf8';
+        } else {
+          expCtx.strokeStyle = '#94a3b8';
+        }
+        expCtx.stroke();
+      }
+
+      const a = document.createElement('a');
+      a.download = `hilbert-curve-stage-${n}.png`;
+      a.href = exportCanvas.toDataURL('image/png');
+      a.click();
+    });
+
+    // SVG Export
+    document.getElementById('btnExportSvg').addEventListener('click', () => {
+      const size = 1000;
+      const total = points.length;
+      const count = Math.max(1, Math.floor(progress * total));
+      const strokeW = Math.max(1, (22 - n * 2.8) * (1000 / 1200));
+
+      let paths = '';
+      for (let i = 0; i < count - 1; i++) {
+        const p1 = points[i];
+        const p2 = points[i + 1];
+        const x1 = (p1.x * size).toFixed(2);
+        const y1 = ((1 - p1.y) * size).toFixed(2);
+        const x2 = (p2.x * size).toFixed(2);
+        const y2 = ((1 - p2.y) * size).toFixed(2);
+        let strokeColor = '#38bdf8';
+        if (colorScheme === 'spectrum') {
+          const hue = (i / total) * 320;
+          strokeColor = `hsl(${hue}, 85%, 60%)`;
+        } else if (colorScheme === 'quadrant') {
+          const q = Math.floor((i / total) * 4);
+          const colors = ['#f43f5e', '#38bdf8', '#34d399', '#f59e0b'];
+          strokeColor = colors[q] || '#38bdf8';
+        } else {
+          strokeColor = '#94a3b8';
+        }
+        paths += `<line x1="${x1}" y1="${y1}" x2="${x2}" y2="${y2}" stroke="${strokeColor}" stroke-width="${strokeW.toFixed(2)}" stroke-linecap="round"/>\n`;
+      }
+
+      const svgContent = `<?xml version="1.0" encoding="UTF-8"?>
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 ${size} ${size}" width="${size}" height="${size}">
+  <rect width="${size}" height="${size}" fill="#060a12"/>
+  ${paths}
+</svg>`;
+
+      const blob = new Blob([svgContent], { type: 'image/svg+xml' });
+      const a = document.createElement('a');
+      a.download = `hilbert-curve-stage-${n}.svg`;
+      a.href = URL.createObjectURL(blob);
+      a.click();
+    });
+
+    // Initialize
+    updateMetrics();
+    render();
+  </script>
+</body>
+</html>
