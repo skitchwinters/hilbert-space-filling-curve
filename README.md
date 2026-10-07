@@ -1,6 +1,12 @@
-# Hilbert Space-Filling Curve Visualizer
+# Dimension & Fractal Constructions Visualizer
 
-An interactive mathematical visualization of the Hilbert Curve construction featured in ***Mathematics Through the Eyes of Faith*** (by James Bradley & Russell Howell, pp. 67–68).
+An interactive mathematical visualization of the constructions featured in Chapter 4 (*Infinity, Dimension, and Fractals*) of ***Mathematics Through the Eyes of Faith*** (by James Bradley & Russell Howell):
+- **Hilbert Space-Filling Curve** (pp. 67–68)
+- **Koch Snowflake**
+- **Cantor Dust & 1D Cantor Set**
+- **Sierpiński Carpet**
+
+**Live URL**: [https://dimension-constructions.vercel.app](https://dimension-constructions.vercel.app)
 
 Designed for mathematics pedagogy and research demonstrations at Jessup University.
 

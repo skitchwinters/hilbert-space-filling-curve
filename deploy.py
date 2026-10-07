@@ -146,6 +146,21 @@ def deploy_project(project_name: str, directory: str):
             print("Deployment created successfully!")
             print(f"Deployment ID: {data.get('id')}")
             print(f"Live URL: https://{data.get('url')}")
+            
+            # Ensure custom alias is assigned
+            dep_id = data.get('id')
+            if dep_id:
+                try:
+                    alias_req = urllib.request.Request(
+                        f'https://api.vercel.com/v2/deployments/{dep_id}/aliases',
+                        data=json.dumps({'alias': f'{project_name}.vercel.app'}).encode('utf-8'),
+                        headers={'Authorization': f'Bearer {token}', 'Content-Type': 'application/json'},
+                        method='POST'
+                    )
+                    with urllib.request.urlopen(alias_req, timeout=10) as a_resp:
+                        print(f"Canonical URL: https://{project_name}.vercel.app")
+                except Exception as ae:
+                    print(f"Note on alias: {ae}")
             return data
     except urllib.error.HTTPError as e:
         print(f"HTTPError {e.code}: {e.read().decode('utf-8')}")
@@ -156,4 +171,5 @@ def deploy_project(project_name: str, directory: str):
 
 if __name__ == '__main__':
     current_dir = os.path.dirname(os.path.abspath(__file__))
-    deploy_project('hilbert-space-filling-curve', current_dir)
+    deploy_project('dimension-constructions', current_dir)
+
